@@ -1,14 +1,15 @@
-import { child, get, getDatabase } from "firebase/database";
-import { ref, set } from "firebase/database";
-import { onValueChanged } from "firebase-functions/v2/database";
-import { useState, useEffect } from 'react';
-const database = getDatabase();
+import { child, get, getDatabase, off, onValue, ref, set } from "firebase/database";
+import { useEffect, useState } from 'react';
+// Import the functions you need from the SDKs you need
 
-class Quiz{
+
+export class Quiz{
     gameId: string | number | undefined;
     db;
     score = 0;
     timeStart: any;
+    userName:string = '';
+
     
     constructor(){
         this.db = getDatabase();
@@ -17,35 +18,35 @@ class Quiz{
     }
 
     createGame(questions: any): Number{
-        let GameId = 8;
+        let GameId = Math.round(Math.random() * 100000);
         set(ref(this.db, 'games/' + GameId), {
             questionList: questions,
             users: [],
             currentQuestion: -1,
             questionStartTime: 0
           });
-        // const onWrittenFunctionDefault = onValueChanged("games/"+gameNum+'/qOn', (event) => {
-        //     this.update()
-        // });
+          
+        this.gameId = GameId
+        console.log(GameId," createGame gameid")
         return GameId;
     }
-    joinGame(name:string,id:number){
+    joinGame(userName:string,gameId:number){
         const dbRef = ref(getDatabase());
         let users: string[] = [];
-        get(child(dbRef, `games/${id}/users`)).then((snapshot) => {
+        get(child(dbRef, `games/${gameId}/users`)).then((snapshot) => {
         if (snapshot.exists()) {
             users = snapshot.val()
         } else {
-            console.log("No data available");
+            console.log("No data available", "join game");
         }
         }).catch((error) => {
         console.error(error);
         });
-        users.push(name)
-        set(ref(this.db, 'games/'+id +'/'+users), {
+        users.push(userName)
+        set(ref(this.db, 'games/'+gameId +'/'+users), {
             users: users
         });
-        this.gameId = id
+        this.gameId = gameId
 
     }
     getQuestions(){
@@ -53,10 +54,9 @@ class Quiz{
         let questions: never[] = []
         get(child(dbRef, `games/${this.gameId}/questionList`)).then((snapshot) => {
         if (snapshot.exists()) {
-            console.log(snapshot.val());
             questions = snapshot.val()
         } else {
-            console.log("No data available");
+            console.log("No data available","get questions",this.gameId);
         }
         }).catch((error) => {
         console.error(error);
@@ -68,10 +68,9 @@ class Quiz{
         let qOn:number = 0
         get(child(dbRef, `games/${this.gameId}/qOn`)).then((snapshot) => {
         if (snapshot.exists()) {
-            console.log(snapshot.val());
             qOn = snapshot.val()
         } else {
-            console.log("No data available");
+            console.log("No data available, getqOn");
         }
         }).catch((error) => {
         console.error(error);
@@ -83,10 +82,9 @@ class Quiz{
         let start = 0
         get(child(dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
         if (snapshot.exists()) {
-            console.log(snapshot.val());
             start = snapshot.val()
         } else {
-            console.log("No data available");
+            console.log("No data available","start");
         }
         }).catch((error) => {
         console.error(error);
@@ -102,9 +100,36 @@ class Quiz{
         if(questions[qOn][anws][1]==true && (Date.now()-this.getqStart()) < 30000){
             this.score += (1000 * (30000-(Date.now()-this.getqStart())/30000))
         }
+        set(ref(this.db, 'games/' + this.gameId + '/users'+this.userName), {
+            score: this.score,
+          });
+    }
+    getScore(pos:number){
+        const dbRef = ref(getDatabase());
+        let users:string[] = []
+        get(child(dbRef, `games/${this.gameId}/users`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                users = snapshot.val()
+
+            } else {
+                console.log("No data available","start");
+            }
+            }).catch((error) => {
+            console.error(error);
+            });
+        let score = null
+        get(child(dbRef, `games/${this.gameId}/users/${users[pos]}/score`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                score = snapshot.val()
+                } else {
+                console.log("No data available","start");
+            }
+            }).catch((error) => {
+                console.error(error);
+            });
     }
     nextQuestion(){
-        let nextQ = parseInt(this.getqOn.toString())
+        let nextQ = this.getqOn()
         nextQ += 1
         set(ref(this.db, 'games/' + this.gameId), {
             qOn: nextQ,
@@ -116,23 +141,44 @@ class Quiz{
         let question:string[] = []
         get(child(dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
         if (snapshot.exists()) {
-            console.log(snapshot.val());
             question = snapshot.val()
         } else {
-            console.log("No data available");
+            console.log("No data available","get current question");
         }
         }).catch((error) => {
         console.error(error);
         });
         return question[this.getqOn()]
     }
+    getDb(){
+        return this.db
+    }
 }
-let q = new Quiz()
-export default function useQuiz(){
-    let [count,setCount] = useState(0)
-    const onWrittenFunction = onValueChanged("games/"+q.getId+'/qOn', () => {setCount(count+1)})
+
+export default function useQuiz(q:Quiz) {
+    const [count, setCount] = useState(0);
+  
+    useEffect(() => {
+      if (!q) {
+        console.error('Quiz instance (q) is not provided to useQuiz.');
+        return;
+      }
+  
+      const db = q.getDb();
+      const gameRef = ref(db, `games/${q.getId()}/qOn`);
+  
+      // Define a callback function that updates the count
+      const handleValueChange = () => {
+        setCount((prevCount) => prevCount + 1); // Correctly handle state updates based on the previous state
+      };
+  
+      onValue(gameRef, handleValueChange);
+  
+      return () => {
+        off(gameRef, 'value', handleValueChange);
+      };
+  
+    }, [q]);   
     return q;
-
-}
-
+  }
 
