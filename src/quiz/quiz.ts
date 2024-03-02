@@ -1,6 +1,6 @@
 import { child, get, getDatabase } from "firebase/database";
 import { ref, set } from "firebase/database";
-const {onValueChanged} = require("firebase-functions/v2/database");
+import { onValueChanged } from "firebase-functions/v2/database";
 import { useState, useEffect } from 'react';
 const database = getDatabase();
 
@@ -17,17 +17,17 @@ class Quiz{
     }
 
     createGame(questions: any): Number{
-        let gameNum = 8;
-        set(ref(this.db, 'games/' + gameNum), {
+        let GameId = 8;
+        set(ref(this.db, 'games/' + GameId), {
             questionList: questions,
             users: [],
-            qOn: -1,
-            start: 0
+            currentQuestion: -1,
+            questionStartTime: 0
           });
         // const onWrittenFunctionDefault = onValueChanged("games/"+gameNum+'/qOn', (event) => {
         //     this.update()
         // });
-        return gameNum;
+        return GameId;
     }
     joinGame(name:string,id:number){
         const dbRef = ref(getDatabase());
