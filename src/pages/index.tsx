@@ -1,6 +1,5 @@
 import { PersonalAction } from "../components/join/PersonalAction";
 import { Link } from "react-router-dom";
-
 export const Index = () => {
     return (
         <>

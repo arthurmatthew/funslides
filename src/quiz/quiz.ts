@@ -9,31 +9,102 @@ export class Quiz{
     score = 0;
     timeStart: any;
     userName:string = '';
+    dbRef: any;
 
     
     constructor(){
         this.db = getDatabase();
-        
+        this.dbRef = ref(this.db)
           
     }
-
-    createGame(questions: any): Number{
-        let GameId = Math.round(Math.random() * 100000);
-        set(ref(this.db, 'games/' + GameId), {
+    gameExists(id:number){
+        get(child(this.dbRef, `games/${id}/currentQuestion`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                return true
+            } else {
+                console.log("No data available", "game does not exist");
+                return false
+            }
+            }).catch((error) => {
+            console.error(error);
+        });
+        return false
+    }
+    createGame(questions: any): number {
+        let gameId = Math.round(Math.random() * 100000);
+    
+        set(ref(this.db, `games/${gameId}`), {
             questionList: questions,
             users: [],
             currentQuestion: -1,
             questionStartTime: 0
+        }).then(() => {
+            this.gameId = gameId;
+            console.log(this.gameId, "createGame gameid");
+        }).catch((error) => {
+            console.error("Did not work lol");
+        });
+    
+        return gameId;
+    }
+    
+    setSlides(slides:any){
+        set(ref(this.db, `games/${this.gameId}/slides`), {
+            slidesArray: slides,
+            currentSlide: -1,
+            //not that it starts  -1, start the slide show with next slide
           });
-          
-        this.gameId = GameId
-        console.log(GameId," createGame gameid")
-        return GameId;
+    }
+    getCurrentSlideNumber(){
+        let curSlide = 0
+        get(child(this.dbRef, `games/${this.gameId}/slides/currentSlide`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                curSlide = snapshot.val()
+            } else {
+                console.log("No data available", "current slide");
+            }
+            }).catch((error) => {
+            console.error(error);
+        });
+        return curSlide
+    }
+    nextSlide(){
+        let nxtSlide = this.getCurrentSlideNumber()+1
+        set(ref(this.db, `games/${this.gameId}/slides`), {
+            currentSlide: nxtSlide,
+            //not that it starts  -1, start the slide show with next slide
+        });
+    }
+    getAllSlides(){
+        let slides:string[] = [];
+        get(child(this.dbRef, `games/${this.gameId}/slides/slidesArray`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                slides = snapshot.val()
+            } else {
+                console.log("No data available", "all slide");
+            }
+            }).catch((error) => {
+            console.error(error);
+        });
+        return slides
+    }
+    getCurrentSlide():string{
+        let slides = "";
+        console.log(this.getCurrentSlideNumber())
+        get(child(this.dbRef, `games/${this.gameId}/slides/slidesArray`)).then((snapshot) => {
+            if (snapshot.exists()) {
+                slides = snapshot.val()[this.getCurrentSlideNumber()]
+            } else {
+                console.log("No data available", "current slide");
+            }
+            }).catch((error) => {
+            console.error(error);
+        });
+        return slides
     }
     joinGame(userName:string,gameId:number){
-        const dbRef = ref(getDatabase());
         let users: string[] = [];
-        get(child(dbRef, `games/${gameId}/users`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${gameId}/users`)).then((snapshot) => {
         if (snapshot.exists()) {
             users = snapshot.val()
         } else {
@@ -50,9 +121,8 @@ export class Quiz{
 
     }
     getQuestions(){
-        const dbRef = ref(getDatabase());
         let questions: never[] = []
-        get(child(dbRef, `games/${this.gameId}/questionList`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${this.gameId}/questionList`)).then((snapshot) => {
         if (snapshot.exists()) {
             questions = snapshot.val()
         } else {
@@ -64,9 +134,8 @@ export class Quiz{
         return questions
     }
     getqOn(){
-        const dbRef = ref(getDatabase());
         let qOn:number = 0
-        get(child(dbRef, `games/${this.gameId}/qOn`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${this.gameId}/qOn`)).then((snapshot) => {
         if (snapshot.exists()) {
             qOn = snapshot.val()
         } else {
@@ -78,9 +147,8 @@ export class Quiz{
         return qOn
     }
     getqStart(){
-        const dbRef = ref(getDatabase());
         let start = 0
-        get(child(dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
         if (snapshot.exists()) {
             start = snapshot.val()
         } else {
@@ -105,28 +173,28 @@ export class Quiz{
           });
     }
     getScore(pos:number){
-        const dbRef = ref(getDatabase());
         let users:string[] = []
-        get(child(dbRef, `games/${this.gameId}/users`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${this.gameId}/users`)).then((snapshot) => {
             if (snapshot.exists()) {
                 users = snapshot.val()
 
             } else {
-                console.log("No data available","start");
+                console.log("No data available","get users");
             }
             }).catch((error) => {
             console.error(error);
             });
         let score = null
-        get(child(dbRef, `games/${this.gameId}/users/${users[pos]}/score`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${this.gameId}/users/${users[pos]}/score`)).then((snapshot) => {
             if (snapshot.exists()) {
                 score = snapshot.val()
                 } else {
-                console.log("No data available","start");
+                console.log("No data available","score");
             }
             }).catch((error) => {
                 console.error(error);
             });
+        return score
     }
     nextQuestion(){
         let nextQ = this.getqOn()
@@ -137,9 +205,8 @@ export class Quiz{
           });
     }
     getCurrentQuestion(){
-        const dbRef = ref(getDatabase());
         let question:string[] = []
-        get(child(dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
+        get(child(this.dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
         if (snapshot.exists()) {
             question = snapshot.val()
         } else {
