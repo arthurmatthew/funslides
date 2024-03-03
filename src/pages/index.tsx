@@ -54,6 +54,7 @@ export const Index = () => {
                         </div>
                     </PersonalAction>
                 </div>
+                <p>more info later blah blah</p>
             </div>
         </>
     );

@@ -4,6 +4,7 @@ import { TPresentation, TSlide } from "../../types";
 import Smile from "../../assets/fs-smile.png";
 import { Link } from "react-router-dom";
 import { ToolbarSeperator } from "../../components/create/ToolbarSeperator";
+import { btoaUrl } from "../../helpers/urlSafeEncryption";
 
 export const CreateIndex = () => {
     const [slides, _setSlides] = useState<TPresentation>([
@@ -65,9 +66,12 @@ export const CreateIndex = () => {
                     <i className="bi-type-strikethrough" />
                 </div>
                 <ToolbarSeperator />
-                <div className="flex items-center gap-3 rounded-lg border-2 border-gray-300 bg-gray-100 px-2">
+                <Link
+                    to={`/host/${btoaUrl(JSON.stringify(slides))}`}
+                    className="flex items-center gap-3 rounded-lg border-2 border-gray-300 bg-gray-100 px-2"
+                >
                     <p>Present</p>
-                </div>
+                </Link>
             </div>
             <div className="row-span-11 grid grid-cols-6">
                 <div className="col-span-1 flex flex-col gap-2 overflow-y-scroll border-r-2 border-gray-200 p-2">
@@ -85,8 +89,8 @@ export const CreateIndex = () => {
                             <i className="bi-pencil-fill ml-1 text-sm" />
                         </h2>
                     </div>
-                    <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-500">
-                        <i className="bi-plus text-6xl text-gray-500" />
+                    <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-300">
+                        <i className="bi-plus text-6xl text-gray-300" />
                     </div>
                 </div>
                 <div className="col-span-5 flex items-center justify-center bg-gray-300">

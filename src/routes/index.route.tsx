@@ -3,6 +3,7 @@ import { Index } from "../pages/index";
 import { NotFound } from "../pages/not-found";
 import { Layout } from "../components/index/Layout";
 import { JoinIndex } from "../pages/join";
+import { HostIndex } from "../pages/host";
 
 export const IndexRoute = (
     <Route
@@ -16,5 +17,6 @@ export const IndexRoute = (
     >
         <Route path="/" element={<Index />} />
         <Route path="/join" element={<JoinIndex />} />
+        <Route path="/host/:presentation?/" element={<HostIndex />} />
     </Route>
 );
