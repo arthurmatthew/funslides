@@ -1,251 +1,266 @@
-import { child, get, getDatabase, off, onValue, ref, set } from "firebase/database";
+import { child, get, getDatabase, onValue, off, ref, set } from "firebase/database";
 import { useEffect, useState } from 'react';
-// Import the functions you need from the SDKs you need
 
-
-export class Quiz{
-    gameId: string | number | undefined;
-    db;
+export class Quiz {
+    gameId = -1;
+    db: any;
     score = 0;
     timeStart: any;
-    userName:string = '';
+    userName = '';
     dbRef: any;
 
-    
-    constructor(){
+    constructor() {
         this.db = getDatabase();
-        this.dbRef = ref(this.db)
-          
+        this.dbRef = ref(this.db);
     }
-    gameExists(id:number){
-        get(child(this.dbRef, `games/${id}/currentQuestion`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                return true
-            } else {
-                console.log("No data available", "game does not exist");
-                return false
-            }
-            }).catch((error) => {
+
+    async gameExists(id: number): Promise<boolean> {
+        try {
+            const snapshot = await get(child(this.dbRef, `games/${id}/currentQuestion`));
+            return snapshot.exists();
+        } catch (error) {
             console.error(error);
-        });
-        return false
+            return false;
+        }
     }
-    createGame(questions: any): number {
-        let gameId = Math.round(Math.random() * 100000);
-    
-        set(ref(this.db, `games/${gameId}`), {
-            questionList: questions,
-            users: [],
-            currentQuestion: -1,
-            questionStartTime: 0
-        }).then(() => {
+
+    async createGame(questions: any): Promise<number> {
+        try {
+            const gameId = Math.round(Math.random() * 100000);
+            await set(ref(this.db, `games/${gameId}`), {
+                questionList: questions,
+                users: [],
+                currentQuestion: -1,
+                questionStartTime: 0
+            });
             this.gameId = gameId;
             console.log(this.gameId, "createGame gameid");
-        }).catch((error) => {
-            console.error("Did not work lol");
-        });
-    
-        return gameId;
+            return gameId;
+        } catch (error) {
+            console.error("Did not work lol", error);
+            return -1;
+        }
     }
-    
-    setSlides(slides:any){
-        set(ref(this.db, `games/${this.gameId}/slides`), {
-            slidesArray: slides,
-            currentSlide: -1,
-            //not that it starts  -1, start the slide show with next slide
-          });
+
+    async setSlides(slides: any): Promise<void> {
+        try {
+            await set(ref(this.db, `games/${this.gameId}/slides`), {
+                slidesArray: slides,
+                currentSlide: -1,
+            });
+        } catch (error) {
+            console.error(error);
+        }
     }
-    getCurrentSlideNumber(){
-        let curSlide = 0
-        get(child(this.dbRef, `games/${this.gameId}/slides/currentSlide`)).then((snapshot) => {
+
+    async getCurrentSlideNumber(): Promise<number> {
+        try {
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/slides/currentSlide`));
             if (snapshot.exists()) {
-                curSlide = snapshot.val()
+                return snapshot.val();
+            } else {
+                console.log("No data available", "current slide number");
+                return 0;
+            }
+        } catch (error) {
+            console.error(error);
+            return 0;
+        }
+    }
+
+    async nextSlide(): Promise<void> {
+        try {
+            const nxtSlide = await this.getCurrentSlideNumber() + 1;
+            await set(ref(this.db, `games/${this.gameId}/slides`), {
+                currentSlide: nxtSlide,
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async getCurrentSlide(): Promise<string> {
+        try {
+            let slide = "error did not work2";
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/slides/slidesArray`));
+            if (snapshot.exists()) {
+                slide = snapshot.val()[await this.getCurrentSlideNumber()];
+                slide = 'testing';
             } else {
                 console.log("No data available", "current slide");
+                slide = 'test did';
             }
-            }).catch((error) => {
+            return slide;
+        } catch (error) {
             console.error(error);
-        });
-        return curSlide
-    }
-    nextSlide(){
-        let nxtSlide = this.getCurrentSlideNumber()+1
-        set(ref(this.db, `games/${this.gameId}/slides`), {
-            currentSlide: nxtSlide,
-            //not that it starts  -1, start the slide show with next slide
-        });
-    }
-    getAllSlides(){
-        let slides:string[] = [];
-        get(child(this.dbRef, `games/${this.gameId}/slides/slidesArray`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                slides = snapshot.val()
-            } else {
-                console.log("No data available", "all slide");
-            }
-            }).catch((error) => {
-            console.error(error);
-        });
-        return slides
-    }
-    getCurrentSlide():string{
-        let slides = "";
-        console.log(this.getCurrentSlideNumber())
-        get(child(this.dbRef, `games/${this.gameId}/slides/slidesArray`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                slides = snapshot.val()[this.getCurrentSlideNumber()]
-            } else {
-                console.log("No data available", "current slide");
-            }
-            }).catch((error) => {
-            console.error(error);
-        });
-        return slides
-    }
-    joinGame(userName:string,gameId:number){
-        let users: string[] = [];
-        get(child(this.dbRef, `games/${gameId}/users`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            users = snapshot.val()
-        } else {
-            console.log("No data available", "join game");
+            return 'error peroi';
         }
-        }).catch((error) => {
-        console.error(error);
-        });
-        users.push(userName)
-        set(ref(this.db, 'games/'+gameId +'/'+users), {
-            users: users
-        });
-        this.gameId = gameId
+    }
 
-    }
-    getQuestions(){
-        let questions: never[] = []
-        get(child(this.dbRef, `games/${this.gameId}/questionList`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            questions = snapshot.val()
-        } else {
-            console.log("No data available","get questions",this.gameId);
-        }
-        }).catch((error) => {
-        console.error(error);
-        });
-        return questions
-    }
-    getqOn(){
-        let qOn:number = 0
-        get(child(this.dbRef, `games/${this.gameId}/qOn`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            qOn = snapshot.val()
-        } else {
-            console.log("No data available, getqOn");
-        }
-        }).catch((error) => {
-        console.error(error);
-        });
-        return qOn
-    }
-    getqStart(){
-        let start = 0
-        get(child(this.dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            start = snapshot.val()
-        } else {
-            console.log("No data available","start");
-        }
-        }).catch((error) => {
-        console.error(error);
-        });
-        return start
-    }
-    getId(){
-        return this.gameId
-    }
-    calcScore(anws:number){
-        let questions = this.getQuestions()
-        let qOn:number = this.getqOn();
-        if(questions[qOn][anws][1]==true && (Date.now()-this.getqStart()) < 30000){
-            this.score += (1000 * (30000-(Date.now()-this.getqStart())/30000))
-        }
-        set(ref(this.db, 'games/' + this.gameId + '/users'+this.userName), {
-            score: this.score,
-          });
-    }
-    getScore(pos:number){
-        let users:string[] = []
-        get(child(this.dbRef, `games/${this.gameId}/users`)).then((snapshot) => {
+    async joinGame(userName: string, gameId: number): Promise<void> {
+        try {
+            let users: string[] = [];
+            const snapshot = await get(child(this.dbRef, `games/${gameId}/users`));
             if (snapshot.exists()) {
-                users = snapshot.val()
-
+                users = snapshot.val();
             } else {
-                console.log("No data available","get users");
+                console.log("No data available", "join game");
             }
-            }).catch((error) => {
+            users.push(userName);
+            await set(ref(this.db, `games/${gameId}/users`), {
+                users: users
+            });
+            this.gameId = gameId;
+        } catch (error) {
             console.error(error);
-            });
-        let score = null
-        get(child(this.dbRef, `games/${this.gameId}/users/${users[pos]}/score`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                score = snapshot.val()
-                } else {
-                console.log("No data available","score");
-            }
-            }).catch((error) => {
-                console.error(error);
-            });
-        return score
-    }
-    nextQuestion(){
-        let nextQ = this.getqOn()
-        nextQ += 1
-        set(ref(this.db, 'games/' + this.gameId), {
-            qOn: nextQ,
-            start: Date.now()
-          });
-    }
-    getCurrentQuestion(){
-        let question:string[] = []
-        get(child(this.dbRef, `games/${this.gameId}/start`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            question = snapshot.val()
-        } else {
-            console.log("No data available","get current question");
         }
-        }).catch((error) => {
-        console.error(error);
-        });
-        return question[this.getqOn()]
     }
-    getDb(){
-        return this.db
+
+    async getQuestions(): Promise<any[]> {
+        try {
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/questionList`));
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                console.log("No data available", "get questions", this.gameId);
+                return [];
+            }
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
+    }
+
+    async getqOn(): Promise<number> {
+        try {
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/currentQuestion`));
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                console.log("No data available", "get qOn");
+                return 0;
+            }
+        } catch (error) {
+            console.error(error);
+            return 0;
+        }
+    }
+
+    async getqStart(): Promise<number> {
+        try {
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/start`));
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                console.log("No data available", "start");
+                return 0;
+            }
+        } catch (error) {
+            console.error(error);
+            return 0;
+        }
+    }
+
+    getId(): number {
+        return this.gameId;
+    }
+
+    async calcScore(anws: number): Promise<void> {
+        try {
+            const questions = await this.getQuestions();
+            const qOn: number = await this.getqOn();
+            if (questions[qOn][anws][1] == true && (Date.now() - await this.getqStart()) < 30000) {
+                this.score += (1000 * (30000 - (Date.now() - await this.getqStart()) / 30000));
+            }
+            await set(ref(this.db, `games/${this.gameId}/users/${this.userName}`), {
+                score: this.score,
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async getScore(pos: number): Promise<number | null> {
+        try {
+            let users: string[] = [];
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/users`));
+            if (snapshot.exists()) {
+                users = snapshot.val();
+            } else {
+                console.log("No data available", "get users");
+                return null;
+            }
+            let score = null;
+            const userSnapshot = await get(child(this.dbRef, `games/${this.gameId}/users/${users[pos]}/score`));
+            if (userSnapshot.exists()) {
+                score = userSnapshot.val();
+            } else {
+                console.log("No data available", "score");
+            }
+            return score;
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    async nextQuestion(): Promise<void> {
+        try {
+            let nextQ = await this.getqOn();
+            nextQ += 1;
+            await set(ref(this.db, `games/${this.gameId}`), {
+                qOn: nextQ,
+                start: Date.now()
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async getCurrentQuestion(): Promise<string> {
+        try {
+            let question: string[] = [];
+            const snapshot = await get(child(this.dbRef, `games/${this.gameId}/start`));
+            if (snapshot.exists()) {
+                question = snapshot.val();
+            } else {
+                console.log("No data available", "get current question");
+            }
+            return question[await this.getqOn()];
+        } catch (error) {
+            console.error(error);
+            return "error";
+        }
+    }
+
+    getDb(): any {
+        return this.db;
     }
 }
 
-export default function useQuiz(q:Quiz) {
+export default function useQuiz(q: Quiz) {
     const [count, setCount] = useState(0);
-  
-    useEffect(() => {
-      if (!q) {
-        console.error('Quiz instance (q) is not provided to useQuiz.');
-        return;
-      }
-  
-      const db = q.getDb();
-      const gameRef = ref(db, `games/${q.getId()}/qOn`);
-  
-      // Define a callback function that updates the count
-      const handleValueChange = () => {
-        setCount((prevCount) => prevCount + 1); // Correctly handle state updates based on the previous state
-      };
-  
-      onValue(gameRef, handleValueChange);
-  
-      return () => {
-        off(gameRef, 'value', handleValueChange);
-      };
-  
-    }, [q]);   
-    return q;
-  }
 
+    useEffect(() => {
+        if (!q) {
+            console.error('Quiz instance (q) is not provided to useQuiz.');
+            return;
+        }
+
+        const db = q.getDb();
+        const gameRef = ref(db, `games/${q.getId()}/qOn`);
+
+        // Define a callback function that updates the count
+        const handleValueChange = () => {
+            setCount((prevCount) => prevCount + 1); // Correctly handle state updates based on the previous state
+        };
+
+        onValue(gameRef, handleValueChange);
+
+        return () => {
+            off(gameRef, 'value', handleValueChange);
+        };
+
+    }, [q]);
+    return q;
+}

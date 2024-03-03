@@ -1,5 +1,38 @@
 import { PersonalAction } from "../components/join/PersonalAction";
 import { Link } from "react-router-dom";
+import { initializeApp } from "firebase/app";
+
+import { getAnalytics } from "firebase/analytics";
+
+// TODO: Add SDKs for Firebase products that you want to use
+
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+
+// Your web app's Firebase configuration
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyDdphHvQdruSOkDdVbYDGWGjPVzfN9ZAN0",
+
+  authDomain: "funslide-94fb9.firebaseapp.com",
+
+  databaseURL: "https://funslide-94fb9-default-rtdb.firebaseio.com/",
+
+  projectId: "funslide-94fb9",
+
+  storageBucket: "funslide-94fb9.appspot.com",
+
+  messagingSenderId: "850878584627",
+
+  appId: "1:850878584627:web:8fe6302a6d18f7d0e05046",
+
+  measurementId: "G-6RY4XQKKSV"
+
+};
+initializeApp(firebaseConfig)
 export const Index = () => {
     return (
         <>
@@ -11,9 +44,9 @@ export const Index = () => {
                     </span>
                 </h1>
                 <p className="max-w-4xl text-xl font-normal">
-                    Students are 580% more likely to retain information if they
-                    aren't bored. We'll help you engage your audience without
-                    forcing them to take notes.
+                    Students are 580% more likely to retain information{" "}
+                    <b>if they aren't bored</b>. We'll help you engage your
+                    audience without forcing them to take notes.
                 </p>
             </div>
 
@@ -37,9 +70,20 @@ export const Index = () => {
                     </PersonalAction>
                     <PersonalAction>
                         <h1 className="text-2xl">For Teachers</h1>
-                        <button className="rounded-md bg-purple-200 p-4 px-16">
-                            Start Presenting
-                        </button>
+                        <div className="grid grid-cols-2 gap-1">
+                            <Link
+                                to="/host"
+                                className="rounded-md bg-purple-200 p-4 px-16"
+                            >
+                                Start Presenting
+                            </Link>
+                            <Link
+                                to="/create"
+                                className="rounded-md bg-purple-200 p-4 px-16"
+                            >
+                                Start Designing
+                            </Link>
+                        </div>
                     </PersonalAction>
                 </div>
             </div>
