@@ -12,9 +12,9 @@ export const Index = () => {
                     </span>
                 </h1>
                 <p className="max-w-4xl text-xl font-normal">
-                    Students are 580% more likely to retain information if they
-                    aren't bored. We'll help you engage your audience without
-                    forcing them to take notes.
+                    Students are 580% more likely to retain information{" "}
+                    <b>if they aren't bored</b>. We'll help you engage your
+                    audience without forcing them to take notes.
                 </p>
             </div>
 
@@ -38,9 +38,20 @@ export const Index = () => {
                     </PersonalAction>
                     <PersonalAction>
                         <h1 className="text-2xl">For Teachers</h1>
-                        <button className="rounded-md bg-purple-200 p-4 px-16">
-                            Start Presenting
-                        </button>
+                        <div className="grid grid-cols-2 gap-1">
+                            <Link
+                                to="/host"
+                                className="rounded-md bg-purple-200 p-4 px-16"
+                            >
+                                Start Presenting
+                            </Link>
+                            <Link
+                                to="/create"
+                                className="rounded-md bg-purple-200 p-4 px-16"
+                            >
+                                Start Designing
+                            </Link>
+                        </div>
                     </PersonalAction>
                 </div>
             </div>
