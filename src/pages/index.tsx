@@ -1,6 +1,38 @@
 import { PersonalAction } from "../components/join/PersonalAction";
 import { Link } from "react-router-dom";
+import { initializeApp } from "firebase/app";
 
+import { getAnalytics } from "firebase/analytics";
+
+// TODO: Add SDKs for Firebase products that you want to use
+
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+
+// Your web app's Firebase configuration
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyDdphHvQdruSOkDdVbYDGWGjPVzfN9ZAN0",
+
+  authDomain: "funslide-94fb9.firebaseapp.com",
+
+  databaseURL: "https://funslide-94fb9-default-rtdb.firebaseio.com/",
+
+  projectId: "funslide-94fb9",
+
+  storageBucket: "funslide-94fb9.appspot.com",
+
+  messagingSenderId: "850878584627",
+
+  appId: "1:850878584627:web:8fe6302a6d18f7d0e05046",
+
+  measurementId: "G-6RY4XQKKSV"
+
+};
+initializeApp(firebaseConfig)
 export const Index = () => {
     return (
         <>
